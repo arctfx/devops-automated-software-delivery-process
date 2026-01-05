@@ -46,10 +46,11 @@ jobs:
             -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
             -Dsonar.organization=${{ secrets.SONAR_ORG_KEY }}
             -Dsonar.python.version=3.12
-            -Dsonar.python.coverage.reportPaths=coverage.xml
             -Dsonar.sources=src/
+            -Dsonar.exclusions=**/test_*.py
             -Dsonar.tests=src/
-            -Dsonar.test.exclusions=src/test_app.py
+            -Dsonar.test.inclusions=**/test_*.py
+            -Dsonar.python.coverage.reportPaths=coverage.xml
 
   build-and-scan:
     name: Docker Build & Scan
