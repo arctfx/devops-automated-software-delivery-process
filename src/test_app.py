@@ -1,5 +1,11 @@
-from app import foo
+from app import foo, main
 
-def test_hello_world():
+def test_foo():
+    """Tests the string return value of foo"""
     assert foo() == "Hello World!"
-    
+
+def test_main(capsys):
+    """Tests that main() actually prints the expected output"""
+    main()
+    captured = capsys.readouterr()
+    assert captured.out.strip() == "Hello World!"
