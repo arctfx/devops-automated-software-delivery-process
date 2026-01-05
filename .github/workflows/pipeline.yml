@@ -33,12 +33,11 @@ jobs:
 
       - name: Run Unit Tests with Coverage
         run: |
-          export PYTHONPATH=$PYTHONPATH:$(pwd)/src
-          # Point pytest to the new tests/ folder
-          pytest --cov=src --cov-report=xml:coverage.xml tests/
+          $env:PYTHONPATH = "src"
+          python -m pytest --cov=src --cov-report=xml:coverage.xml tests/
 
       - name: SonarCloud Scan
-        uses: SonarSource/sonarqube-scan-action@v5
+        uses: sonarsource/sonarqube-scan-action@v6
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
