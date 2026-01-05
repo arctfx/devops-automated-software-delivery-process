@@ -1,0 +1,6 @@
+# IDE artifacts
+.idea
+.venv
+
+# Python temp
+__pycache__/

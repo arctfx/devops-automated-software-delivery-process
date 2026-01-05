@@ -1,0 +1,152 @@
+name: DevOps CI/CD Pipeline
+
+# Trigger: Starts on push to feature branches (CI) or main (CI+CD)
+on:
+  push:
+    branches:
+      - main
+      - 'feature/**'
+  pull_request:
+    branches:
+      - main
+
+env:
+  # Configuration variables
+  DOCKER_REGISTRY: my-docker-registry
+  IMAGE_NAME: my-app
+  K8S_NAMESPACE: production
+  # Secrets are stored in GitHub Repository Secrets
+  SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+
+jobs:
+  quality-assurance:
+    name: Code Quality & Security (SAST)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      # Unit Test 
+      - name: Setup Language Environment (Node.js Example)
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+      
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Run Unit Tests
+        run: npm test
+
+      # Linter and Style Check
+      - name: Run Linter
+        run: npm run lint
+
+      # Test SQL Deltas (Database Changes)
+      # Simulates checking migration scripts
+      - name: Validate SQL Migrations
+        run: |
+          echo "Spinning up ephemeral DB container..."
+          # docker run -d -p 5432:5432 postgres:alpine
+          echo "Validating SQL syntax and versioning..."
+          # ./flyway validate
+          echo "SQL Deltas passed validation."
+
+      # DEEP DIVE: SAST (SonarCloud)
+      # Scans source code for vulnerabilities before building artifacts
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.projectKey=my-org_my-project
+            -Dsonar.organization=my-org
+            -Dsonar.sources=.
+            -Dsonar.qualitygate.wait=true 
+            # The 'wait=true' flag breaks the build if the Quality Gate fails
+
+  build-and-scan:
+    name: Build Image & Scan Vulnerabilities
+    needs: quality-assurance
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      # Build Docker Image (Locally)
+      - name: Build Docker Image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: false
+          tags: ${{ env.IMAGE_NAME }}:${{ github.sha }}
+          load: true # Load into Docker daemon for local scanning
+
+      # Scan for Vulnerabilities (Trivy)
+      # Scans the BUILT image (OS + Libraries) for CVEs
+      - name: Run Trivy Vulnerability Scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: '${{ env.IMAGE_NAME }}:${{ github.sha }}'
+          format: 'table'
+          exit-code: '1' # Fails the pipeline if vulnerabilities are found
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+
+      # Push to Registry (Only if on Main branch)
+      - name: Login to Docker Hub
+        if: github.ref == 'refs/heads/main'
+        uses: docker/login-action@v2
+        with:
+          username: ${{ env.DOCKER_USERNAME }}
+          password: ${{ env.DOCKER_PASSWORD }}
+
+      - name: Push Docker Image
+        if: github.ref == 'refs/heads/main'
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: ${{ env.IMAGE_NAME }}:${{ github.sha }},${{ env.IMAGE_NAME }}:latest
+
+  deploy:
+    name: Deploy to Kubernetes
+    needs: build-and-scan
+    if: github.ref == 'refs/heads/main' # Only deploy changes from main
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+
+      # Authenticate with Cloud Provider
+      - name: Configure Kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBE_CONFIG_DATA }}" | base64 -d > $HOME/.kube/config
+
+      # Rolling Deploy
+      - name: Update Deployment & Rollout
+        run: |
+          echo "Deploying version ${{ github.sha }}..."
+          
+          # Sed is used here to dynamically inject the new image tag into the manifest
+          sed -i "s|image: .*|image: ${{ env.IMAGE_NAME }}:${{ github.sha }}|g" k8s/deployment.yaml
+          
+          # Apply the configuration
+          kubectl apply -f k8s/deployment.yaml -n ${{ env.K8S_NAMESPACE }}
+          
+          # Wait for the rollout to complete to verify health
+          kubectl rollout status deployment/${{ env.IMAGE_NAME }} -n ${{ env.K8S_NAMESPACE }}
