@@ -1,21 +1,16 @@
-FROM ubuntu:latest
-# FROM node:16-alpine
-LABEL authors="arctfx"
+FROM python:3.12-slim
 
-
-# Set working directory
 WORKDIR /app
 
-# Copy package.json and install dependencies
-COPY package*.json ./
-RUN npm install --production
+# Copy requirements and install
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the application code
-COPY . .
+# Copy source code
+COPY src/ ./src/
 
-# Expose the application port
-EXPOSE 3000
+# Set environment variable so Python can find the src folder
+ENV PYTHONPATH=/app/src
 
-# Start the application
-CMD ["npm", "start"]
-ENTRYPOINT ["top", "-b"]
+# Run the app
+CMD ["python", "src/app.py"]
