@@ -1,3 +1,4 @@
+import pytest
 from app import foo, main
 
 def test_foo():
