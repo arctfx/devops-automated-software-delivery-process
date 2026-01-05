@@ -16,11 +16,12 @@ jobs:
     name: Python QA & Security (SAST)
     runs-on: ubuntu-latest
     steps:
+      # Using Commit SHAs instead of tags for security
       - name: Checkout Code
-        uses: actions/checkout@v3
-
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
+      
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ee53102
         with:
           python-version: '3.12'
 
@@ -32,13 +33,21 @@ jobs:
       - name: Run Linter
         run: flake8 src/ --count --select=E9,F63,F7,F82 --show-source --statistics
 
-      - name: Run Unit Tests
-        run: pytest src/
-
-      - name: Test SQL Deltas
+      - name: Run Unit Tests with Coverage
         run: |
-          echo "Validating migrations..."
-          if [ -d "migrations" ]; then ls migrations/; else echo "No migrations found"; fi
+          pytest --cov=src --cov-report=xml src/
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
+            -Dsonar.organization=${{ secrets.SONAR_ORG_KEY }}
+            -Dsonar.python.version=3.12
+            -Dsonar.python.coverage.reportPaths=coverage.xml
 
   build-and-scan:
     name: Docker Build & Scan
@@ -46,21 +55,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
+
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@f95db51fddba0c2d1ec667646a06c2ce06100226
+
       - name: Build Image
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@0565240e2d4ab88bba5387471f7bd85e92e00c7e
         with:
           context: .
           push: false
           tags: ${{ env.IMAGE_NAME }}:${{ github.sha }}
           load: true 
+
       - name: Container Scan
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: '${{ env.IMAGE_NAME }}:${{ github.sha }}'
           format: 'table'
+          exit-code: '1'
           severity: 'CRITICAL,HIGH'
 
   deploy:
@@ -70,7 +83,7 @@ jobs:
     runs-on: self-hosted 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
       - name: Deploy
         shell: pwsh
         run: |

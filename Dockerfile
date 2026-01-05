@@ -1,16 +1,21 @@
 FROM python:3.12-slim
 
+# Create a non-root user and group
+RUN groupadd -r appuser && useradd -r -g appuser appuser
+
 WORKDIR /app
 
-# Copy requirements and install
+# Copy and install requirements
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy source code
+# Copy source code and change ownership to the new user
 COPY src/ ./src/
+RUN chown -R appuser:appuser /app
 
-# Set environment variable so Python can find the src folder
+# Switch to the non-root user
+USER appuser
+
 ENV PYTHONPATH=/app/src
 
-# Run the app
 CMD ["python", "src/app.py"]
