@@ -16,12 +16,11 @@ jobs:
     name: Python QA & Security (SAST)
     runs-on: ubuntu-latest
     steps:
-      # Using Commit SHAs instead of tags for security
       - name: Checkout Code
-        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
-      
+        uses: actions/checkout@v4
+
       - name: Set up Python
-        uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ee53102
+        uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
@@ -55,26 +54,41 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
+        uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@f95db51fddba0c2d1ec667646a06c2ce06100226
+        uses: docker/setup-buildx-action@v3
 
       - name: Build Image
-        uses: docker/build-push-action@0565240e2d4ab88bba5387471f7bd85e92e00c7e
+        uses: docker/build-push-action@v5
         with:
           context: .
           push: false
           tags: ${{ env.IMAGE_NAME }}:${{ github.sha }}
           load: true 
 
-      - name: Container Scan
+      - name: Container Scan (Trivy)
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: '${{ env.IMAGE_NAME }}:${{ github.sha }}'
           format: 'table'
           exit-code: '1'
           severity: 'CRITICAL,HIGH'
+
+      - name: Login to Docker Hub
+        if: github.ref == 'refs/heads/main'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Push Image
+        if: github.ref == 'refs/heads/main'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ env.IMAGE_NAME }}:${{ github.sha }},${{ env.IMAGE_NAME }}:latest
 
   deploy:
     name: Deploy to Local K8s
@@ -83,9 +97,17 @@ jobs:
     runs-on: self-hosted 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
-      - name: Deploy
+        uses: actions/checkout@v4
+
+      - name: Deploy to Docker Desktop
         shell: pwsh
         run: |
+          # Create namespace if it doesn't exist
+          kubectl create namespace ${{ env.K8S_NAMESPACE }} --dry-run=client -o yaml | kubectl apply -f -
+          
+          # Update the image in the manifest and apply
+          (Get-Content k8s/deployment.yaml) -replace 'image: .*', "image: ${{ env.IMAGE_NAME }}:${{ github.sha }}" | Set-Content k8s/deployment.yaml
           kubectl apply -f k8s/deployment.yaml -n ${{ env.K8S_NAMESPACE }}
           
+          # Verify rollout
+          kubectl rollout status deployment/my-app -n ${{ env.K8S_NAMESPACE }}
