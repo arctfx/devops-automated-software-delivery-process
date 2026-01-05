@@ -49,7 +49,9 @@ jobs:
             -Dsonar.python.version=3.12
             -Dsonar.sources=src/
             -Dsonar.tests=tests/
+            -Dsonar.test.inclusions=tests/test_app.py
             -Dsonar.python.coverage.reportPaths=coverage.xml
+            -Dsonar.verbose=true
 
   build-and-scan:
     name: Docker Build & Scan
