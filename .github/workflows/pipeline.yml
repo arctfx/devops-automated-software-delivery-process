@@ -57,7 +57,7 @@ jobs:
   build-and-scan:
     name: Docker Build & Scan
     needs: quality-assurance
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
