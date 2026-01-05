@@ -33,8 +33,9 @@ jobs:
 
       - name: Run Unit Tests with Coverage
         run: |
-          # Use --cov=src to ensure it measures the code, not just the tests
-          pytest --cov=src --cov-report=xml:coverage.xml src/
+          export PYTHONPATH=$PYTHONPATH:$(pwd)/src
+          # Point pytest to the new tests/ folder
+          pytest --cov=src --cov-report=xml:coverage.xml tests/
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@v5
@@ -47,9 +48,7 @@ jobs:
             -Dsonar.organization=${{ secrets.SONAR_ORG_KEY }}
             -Dsonar.python.version=3.12
             -Dsonar.sources=src/
-            -Dsonar.exclusions=**/test_*.py
-            -Dsonar.tests=src/
-            -Dsonar.test.inclusions=**/test_*.py
+            -Dsonar.tests=tests/
             -Dsonar.python.coverage.reportPaths=coverage.xml
 
   build-and-scan:
