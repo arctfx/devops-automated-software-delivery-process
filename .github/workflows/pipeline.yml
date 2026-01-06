@@ -70,8 +70,9 @@ jobs:
       - name: Build Image
         shell: cmd
         run: |
-          docker build -t %IMAGE_NAME%:%GITHUB_SHA% .
-          
+          docker build --progress=plain -t %IMAGE_NAME%:%GITHUB_SHA% .
+
+
       - name: Container Scan (Trivy)
         uses: aquasecurity/trivy-action@master
         with:
