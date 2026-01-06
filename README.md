@@ -3,6 +3,7 @@ FMI DevOps Course Project, Winter Semester 2025-2026
 
 ## Pipeline
 This repository contains a complete, "As Code" DevOps solution for a containerized application. It leverages a T-shaped approach, providing a comprehensive horizontal pipeline with a deep-dive focus on Static Application Security Testing (SAST).
+*Note: the solution assumes a dummy python project in `./src`.*
 
 ## High-level Solution Design
 The solution implements a `Shift-Left` security philosophy within a GitOps-ready framework. It automates the transition of code from a developer's local environment to a production-ready Kubernetes cluster.
