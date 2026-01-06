@@ -65,7 +65,8 @@ jobs:
       - name: Start Docker
         shell: cmd
         run: |
-          net start com.docker.service || echo Docker already running
+          net start com.docker.service
+        continue-on-error: true
 
       - name: Build Image
         shell: cmd
