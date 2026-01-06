@@ -74,10 +74,11 @@ jobs:
           docker build --progress=plain -t %IMAGE_NAME%:%GITHUB_SHA% .
 
 
-      - name: Run Trivy Scan on Docker Image
+      - name: Run Trivy Scan
         shell: cmd
         run: |
-          docker run --rm aquasec/trivy:latest image --exit-code 1 --severity CRITICAL,HIGH %IMAGE_NAME%:%GITHUB_SHA%
+          trivy image --exit-code 1 --severity CRITICAL,HIGH %IMAGE_NAME%:%GITHUB_SHA%
+
   deploy:
     name: Deploy to Local K8s
     needs: build-and-scan
