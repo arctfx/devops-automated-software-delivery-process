@@ -62,11 +62,11 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Start Docker
-        shell: cmd
-        run: |
-          net start com.docker.service
-        continue-on-error: true
+      # - name: Start Docker
+      #   shell: cmd
+      #   run: |
+      #     net start com.docker.service
+      #   continue-on-error: true
 
       - name: Build Image
         shell: cmd
