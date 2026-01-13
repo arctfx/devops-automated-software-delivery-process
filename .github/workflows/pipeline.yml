@@ -59,7 +59,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   build-image-scan:
-    name: Build Image & Scan Vulnerabilities   # Docker Build & Scan
+    name: Build Image & Scan Vulnerabilities  # Docker Build & Scan
     needs: code-quality-sast
     runs-on: self-hosted
     # optionally tag runner in GitHub Settings
