@@ -12,8 +12,8 @@ env:
   K8S_NAMESPACE: production
 
 jobs:
-  quality-assurance:
-    name: Python QA & Security (SAST)
+  code-quality-sast:  # quality-assurance:
+    name: Code Quality & Security (SAST)  # Python QA & Security (SAST)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -58,10 +58,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
-
-  build-and-scan:
-    name: Docker Build & Scan
-    needs: quality-assurance
+  build-image-scan:
+    name: Build Image & Scan Vulnerabilities   # Docker Build & Scan
+    needs: code-quality-sast
     runs-on: self-hosted
     # optionally tag runner in GitHub Settings
     steps:
