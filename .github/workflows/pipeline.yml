@@ -36,6 +36,11 @@ jobs:
           export PYTHONPATH=$PYTHONPATH:$(pwd)/src
           python -m pytest --cov=src --cov-report=xml:coverage.xml tests/
 
+      - name: Check environment variables
+        run: |
+              echo "SONAR_PROJECT_KEY=$SONAR_PROJECT_KEY"
+              echo "SONAR_ORG_KEY=$SONAR_ORG_KEY"
+
       - name: SonarCloud Scan
         uses: sonarsource/sonarqube-scan-action@v6
         env:
