@@ -45,8 +45,6 @@ jobs:
           SONAR_ORG_KEY: ${{ secrets.SONAR_ORG_KEY }}
         with:
           args: >
-            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
-            -Dsonar.organization=${{ secrets.SONAR_ORG_KEY }}
             -Dsonar.python.version=3.12
             -Dsonar.sources=src/
             -Dsonar.tests=tests/
@@ -58,26 +56,23 @@ jobs:
     name: Docker Build & Scan
     needs: quality-assurance
     runs-on: self-hosted
+    # optionally tag runner in GitHub Settings
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
       # - name: Start Docker
-      #   shell: cmd
       #   run: |
       #     net start com.docker.service
       #   continue-on-error: true
 
-      - name: Build Image
-        shell: cmd
+      - name: Build Docker Image
         run: |
-          docker build --progress=plain -t %IMAGE_NAME%:%GITHUB_SHA% .
+          docker build --progress=plain -t $IMAGE_NAME:$GITHUB_SHA .
 
-
-      # - name: Run Trivy Scan
-      #   shell: cmd
-      #   run: |
-      #     trivy image --exit-code 1 --severity CRITICAL,HIGH %IMAGE_NAME%:%GITHUB_SHA%
+      - name: Run Trivy Scan
+        run: |
+            trivy image --exit-code 1 --severity CRITICAL,HIGH $IMAGE_NAME:$GITHUB_SHA
 
   deploy:
     name: Deploy to Local K8s
@@ -88,6 +83,5 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
       - name: Deploy
-        shell: pwsh
         run: |
-          kubectl apply -f k8s/deployment.yaml -n ${{ env.K8S_NAMESPACE }}
+          kubectl apply -f k8s/deployment.yaml -n $K8S_NAMESPACE
