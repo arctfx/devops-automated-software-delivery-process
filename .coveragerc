@@ -1,0 +1,10 @@
+[run]
+source = src
+relative_files = True
+
+[report]
+# This ensures that the paths in the XML are relative to the root
+include = src/*
+# This tells coverage to ignore lines that are just standard Python boilerplate
+exclude_lines =
+    if __name__ == .__main__.:

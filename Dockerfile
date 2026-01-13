@@ -1,21 +1,21 @@
-FROM ubuntu:latest
-# FROM node:16-alpine
-LABEL authors="arctfx"
+FROM python:3.12-slim
 
+# Create a non-root user and group
+RUN groupadd -r appuser && useradd -r -g appuser appuser
 
-# Set working directory
 WORKDIR /app
 
-# Copy package.json and install dependencies
-COPY package*.json ./
-RUN npm install --production
+# Copy and install requirements
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the application code
-COPY . .
+# Copy source code and change ownership to the new user
+COPY src/ ./src/
+RUN chown -R appuser:appuser /app
 
-# Expose the application port
-EXPOSE 3000
+# Switch to the non-root user
+USER appuser
 
-# Start the application
-CMD ["npm", "start"]
-ENTRYPOINT ["top", "-b"]
+ENV PYTHONPATH=/app/src
+
+CMD ["python", "src/app.py"]
