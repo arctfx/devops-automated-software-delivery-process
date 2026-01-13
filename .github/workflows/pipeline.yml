@@ -82,7 +82,7 @@ jobs:
 
   deploy:
     name: Deploy to Local K8s
-    needs: build-and-scan
+    needs: build-image-scan
     if: github.ref == 'refs/heads/main'
     runs-on: self-hosted 
     steps:
