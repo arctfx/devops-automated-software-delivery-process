@@ -43,21 +43,20 @@ jobs:
 
       - name: SonarCloud Scan
         uses: sonarsource/sonarqube-scan-action@v6
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
-          SONAR_ORG_KEY: ${{ secrets.SONAR_ORG_KEY }}
         with:
+          projectKey: ${{ secrets.SONAR_PROJECT_KEY }}
+          organization: ${{ secrets.SONAR_ORG_KEY }}
+          projectBaseDir: .
           args: >
-            -Dsonar.projectKey=${{ env.SONAR_PROJECT_KEY }}
-            -Dsonar.organization=${{ env.SONAR_ORG_KEY }}
             -Dsonar.python.version=3.12
             -Dsonar.sources=src/
             -Dsonar.tests=tests/
             -Dsonar.test.inclusions=tests/test_app.py
             -Dsonar.python.coverage.reportPaths=coverage.xml
             -Dsonar.verbose=true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   build-and-scan:
     name: Docker Build & Scan
