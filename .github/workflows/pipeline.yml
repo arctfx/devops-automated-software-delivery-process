@@ -72,7 +72,7 @@ jobs:
         run: |
           docker build --progress=plain -t $IMAGE_NAME:$GITHUB_SHA .
 
-      - name: Run Trivy Scan
+      - name: Run Trivy Scan  # Make sure Trivy is installed on the self-hosted runner
         run: |
             trivy image --exit-code 1 --severity CRITICAL,HIGH $IMAGE_NAME:$GITHUB_SHA
 
