@@ -45,6 +45,8 @@ jobs:
           SONAR_ORG_KEY: ${{ secrets.SONAR_ORG_KEY }}
         with:
           args: >
+            -Dsonar.projectKey=$SONAR_PROJECT_KEY
+            -Dsonar.organization=$SONAR_ORG_KEY
             -Dsonar.python.version=3.12
             -Dsonar.sources=src/
             -Dsonar.tests=tests/
