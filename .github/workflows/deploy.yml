@@ -5,6 +5,10 @@ on:
     branches:
       - main
 
+env:
+  K8S_NAMESPACE: production
+  IMAGE_NAME: my-app:ci
+
 jobs:
   ephemeral-k8s-deploy:
     name: Deploy App to Ephemeral K8s
@@ -31,18 +35,18 @@ jobs:
 
       - name: Load Docker image into kind cluster
         run: |
-          docker build -t my-app:ci .
-          kind load docker-image my-app:ci --name ci-cluster
+          docker build -t $IMAGE_NAME .
+          kind load docker-image $IMAGE_NAME --name ci-cluster
 
       - name: Deploy app to cluster
         run: |
           kubectl apply -f ./k8s/namespace.yaml
           kubectl apply -f ./k8s/deployment.yaml
-          kubectl rollout status deployment/my-app -n production
+          kubectl rollout status deployment/my-app -n $K8S_NAMESPACE
 
       - name: Check pods status
         run: |
-          kubectl get pods -n production
+          kubectl get pods -n $K8S_NAMESPACE
 
       - name: Delete cluster after deployment
         if: always()
