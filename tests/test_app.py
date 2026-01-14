@@ -8,6 +8,11 @@ def test_foo():
     """Tests the string return value of foo"""
     assert app.foo() == "Hello World!"
 
+def test_bar():
+    """Tests the dummy bar function"""
+    assert app.bar(2, 3) == 5
+    assert app.bar(-1, 1) == 0
+    
 def test_main(capsys):
     """Tests that main() actually prints the expected output"""
     # Skip running the actual server
