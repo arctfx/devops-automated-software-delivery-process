@@ -10,6 +10,10 @@ def bar(x, y):
     """Dummy function because my quality gate is failing with 75% coverage :("""
     return x + y
 
+def baz(s):
+    """Another dummy function to increase coverage"""
+    return s.upper()
+
 class Handler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
         # Always return "Hello World!"

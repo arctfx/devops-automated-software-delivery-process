@@ -12,7 +12,12 @@ def test_bar():
     """Tests the dummy bar function"""
     assert app.bar(2, 3) == 5
     assert app.bar(-1, 1) == 0
-    
+
+def test_baz():
+    """Tests the dummy baz function"""
+    assert app.baz("hello") == "HELLO"
+    assert app.baz("Test") == "TEST"
+
 def test_main(capsys):
     """Tests that main() actually prints the expected output"""
     # Skip running the actual server
