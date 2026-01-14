@@ -5,6 +5,9 @@ on:
     branches:
       - main
 
+env:
+  K8S_NAMESPACE: production
+
 jobs:
   ephemeral-k8s-deploy:
     name: Deploy App to Ephemeral K8s
@@ -15,9 +18,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Docker
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-docker@v4
 
-      - name: Install kind
+      - name: Install Kind
         run: |
           curl -Lo kind https://kind.sigs.k8s.io/dl/v0.25.0/kind-linux-amd64
           chmod +x kind
@@ -29,23 +32,28 @@ jobs:
           kind create cluster --name ci-cluster
           kubectl cluster-info
 
-      - name: Load Docker image into kind cluster
+      - name: Apply namespace
+        run: |
+          kubectl apply -f ./k8s/namespace.yaml
+
+      - name: Build Docker image
         run: |
           docker build -t my-app:ci .
+
+      - name: Load Docker image into Kind cluster
+        run: |
           kind load docker-image my-app:ci --name ci-cluster
 
       - name: Deploy app to cluster
         run: |
-          kubectl apply -f ./k8s/namespace.yaml
-          kubectl apply -f ./k8s/deployment.yaml
-          kubectl rollout status deployment/my-app -n production
+          kubectl apply -f ./k8s/deployment.yaml -n $K8S_NAMESPACE
+          kubectl rollout status deployment/my-app -n $K8S_NAMESPACE
 
       - name: Check pods status
         run: |
-          kubectl get pods -n production
+          kubectl get pods -n $K8S_NAMESPACE
 
       - name: Delete cluster after deployment
         if: always()
         run: |
           kind delete cluster --name ci-cluster
-
