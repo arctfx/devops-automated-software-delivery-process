@@ -12,8 +12,8 @@ env:
   K8S_NAMESPACE: production
 
 jobs:
-  quality-assurance:
-    name: Python QA & Security (SAST)
+  code-quality-sast:  # quality-assurance:
+    name: Code Quality & Security (SAST)  # Python QA & Security (SAST)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -36,32 +36,31 @@ jobs:
           export PYTHONPATH=$PYTHONPATH:$(pwd)/src
           python -m pytest --cov=src --cov-report=xml:coverage.xml tests/
 
-      - name: Check environment variables  # Just for testing
+      - name: Check environment variables
         run: |
-          echo "SONAR_PROJECT_KEY=$SONAR_PROJECT_KEY"
-          echo "SONAR_ORG_KEY=$SONAR_ORG_KEY"
+              echo "SONAR_PROJECT_KEY=$SONAR_PROJECT_KEY"
+              echo "SONAR_ORG_KEY=$SONAR_ORG_KEY"
 
       - name: SonarCloud Scan
         uses: sonarsource/sonarqube-scan-action@v6
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
-          SONAR_ORG_KEY: ${{ secrets.SONAR_ORG_KEY }}
         with:
+          projectBaseDir: .
           args: >
-            -Dsonar.projectKey=${{ env.SONAR_PROJECT_KEY }}
-            -Dsonar.organization=${{ env.SONAR_ORG_KEY }}
+            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
+            -Dsonar.organization=${{ secrets.SONAR_ORG_KEY }}
             -Dsonar.python.version=3.12
             -Dsonar.sources=src/
             -Dsonar.tests=tests/
             -Dsonar.test.inclusions=tests/test_app.py
             -Dsonar.python.coverage.reportPaths=coverage.xml
             -Dsonar.verbose=true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
-  build-and-scan:
-    name: Docker Build & Scan
-    needs: quality-assurance
+  build-image-scan:
+    name: Build Image & Scan Vulnerabilities  # Docker Build & Scan
+    needs: code-quality-sast
     runs-on: self-hosted
     # optionally tag runner in GitHub Settings
     steps:
@@ -75,7 +74,7 @@ jobs:
 
       - name: Build Docker Image
         run: |
-          docker build --progress=plain -t $IMAGE_NAME:$GITHUB_SHA .
+          docker build -t $IMAGE_NAME:$GITHUB_SHA .
 
       - name: Run Trivy Scan  # Make sure Trivy is installed on the self-hosted runner
         run: |
@@ -83,7 +82,7 @@ jobs:
 
   deploy:
     name: Deploy to Local K8s
-    needs: build-and-scan
+    needs: build-image-scan
     if: github.ref == 'refs/heads/main'
     runs-on: self-hosted 
     steps:
