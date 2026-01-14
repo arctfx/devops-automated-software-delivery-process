@@ -28,7 +28,7 @@ spec:
     spec:
       containers:
       - name: my-app-container
-        image: my-docker-registry/my-app:ci
+        image: my-app:ci
         ports:
         - containerPort: 3000
         readinessProbe:
@@ -64,4 +64,4 @@ spec:
     - protocol: TCP
       port: 80
       targetPort: 3000
-  type: LoadBalancer
+  type: ClusterIP
