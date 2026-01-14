@@ -36,6 +36,7 @@ jobs:
 
       - name: Deploy app to cluster
         run: |
+          kubectl apply -f ./k8s/namespace.yaml
           kubectl apply -f ./k8s/deployment.yaml
           kubectl rollout status deployment/my-app -n production
 
@@ -47,4 +48,4 @@ jobs:
         if: always()
         run: |
           kind delete cluster --name ci-cluster
-          
+
