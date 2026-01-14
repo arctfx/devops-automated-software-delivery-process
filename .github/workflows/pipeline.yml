@@ -80,14 +80,15 @@ jobs:
         run: |
             trivy image --exit-code 1 --severity CRITICAL,HIGH $IMAGE_NAME:$GITHUB_SHA
 
-  deploy:
-    name: Deploy to Local K8s
-    needs: build-image-scan
-    if: github.ref == 'refs/heads/main'
-    runs-on: self-hosted 
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-      - name: Deploy
-        run: |
-          kubectl apply -f k8s/deployment.yaml -n $K8S_NAMESPACE
+# Cannot deploy on the local self-hosted runner as GitHub cannot reach it
+  # deploy:
+  #   name: Deploy to Local K8s
+  #   needs: build-image-scan
+  #   if: github.ref == 'refs/heads/main'
+  #   runs-on: self-hosted 
+  #   steps:
+  #     - name: Checkout Code
+  #       uses: actions/checkout@v4
+  #     - name: Deploy
+  #       run: |
+  #         kubectl apply -f k8s/deployment.yaml -n $K8S_NAMESPACE
