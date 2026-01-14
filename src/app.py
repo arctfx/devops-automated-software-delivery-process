@@ -7,11 +7,11 @@ def foo():
     return "Hello World!"
 
 def bar(x, y):
-    """Dummy function because my quality gate is failing with 75% coverage :("""
+    """Dummy function for coverage"""
     return x + y
 
 def baz(s):
-    """Another dummy function to increase coverage"""
+    """Another dummy function"""
     return s.upper()
 
 class Handler(http.server.SimpleHTTPRequestHandler):
@@ -23,7 +23,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         self.wfile.write(b"Hello World!")
 
 def main():
-    with socketserver.TCPServer(("", PORT), Handler) as httpd:
+    # ThreadingTCPServer allows multiple concurrent connections
+    with socketserver.ThreadingTCPServer(("", PORT), Handler) as httpd:
         print(f"Serving on port {PORT}")
         httpd.serve_forever()
 
