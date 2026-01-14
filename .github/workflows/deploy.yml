@@ -18,10 +18,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Docker
+      - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Install kind
+      - name: Install Kind
         run: |
           curl -Lo kind https://kind.sigs.k8s.io/dl/v0.25.0/kind-linux-amd64
           chmod +x kind
@@ -33,7 +33,11 @@ jobs:
           kind create cluster --name ci-cluster
           kubectl cluster-info
 
-      - name: Load Docker image into kind cluster
+      - name: Apply namespace
+        run: |
+          kubectl apply -f ./k8s/namespace.yaml
+
+      - name: Build Docker image
         run: |
           docker build -t $IMAGE_NAME .
           kind load docker-image $IMAGE_NAME --name ci-cluster
@@ -52,4 +56,3 @@ jobs:
         if: always()
         run: |
           kind delete cluster --name ci-cluster
-
