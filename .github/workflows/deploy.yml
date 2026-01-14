@@ -1,0 +1,50 @@
+name: Deploy to Ephemeral Kubernetes
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  ephemeral-k8s-deploy:
+    name: Deploy App to Ephemeral K8s
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v3
+
+      - name: Install kind
+        run: |
+          curl -Lo kind https://kind.sigs.k8s.io/dl/v0.25.0/kind-linux-amd64
+          chmod +x kind
+          sudo mv kind /usr/local/bin/kind
+          kind --version
+
+      - name: Create ephemeral cluster
+        run: |
+          kind create cluster --name ci-cluster
+          kubectl cluster-info
+
+      - name: Load Docker image into kind cluster
+        run: |
+          docker build -t my-app:ci .
+          kind load docker-image my-app:ci --name ci-cluster
+
+      - name: Deploy app to cluster
+        run: |
+          kubectl apply -f ./k8s/deployment.yaml
+          kubectl rollout status deployment/my-app -n production
+
+      - name: Check pods status
+        run: |
+          kubectl get pods -n production
+
+      - name: Delete cluster after deployment
+        if: always()
+        run: |
+          kind delete cluster --name ci-cluster
+          

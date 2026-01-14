@@ -59,7 +59,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   build-image-scan:
-    name: Build Image & Scan Vulnerabilities   # Docker Build & Scan
+    name: Build Image & Scan Vulnerabilities  # Docker Build & Scan
     needs: code-quality-sast
     runs-on: self-hosted
     # optionally tag runner in GitHub Settings
@@ -74,7 +74,7 @@ jobs:
 
       - name: Build Docker Image
         run: |
-          docker build --progress=plain -t $IMAGE_NAME:$GITHUB_SHA .
+          docker build -t $IMAGE_NAME:$GITHUB_SHA .
 
       - name: Run Trivy Scan  # Make sure Trivy is installed on the self-hosted runner
         run: |
