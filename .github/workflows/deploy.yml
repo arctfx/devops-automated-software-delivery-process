@@ -7,6 +7,7 @@ on:
 
 env:
   K8S_NAMESPACE: production
+  IMAGE_NAME: my-app:ci
 
 jobs:
   ephemeral-k8s-deploy:
@@ -38,15 +39,13 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t my-app:ci .
-
-      - name: Load Docker image into Kind cluster
-        run: |
-          kind load docker-image my-app:ci --name ci-cluster
+          docker build -t $IMAGE_NAME .
+          kind load docker-image $IMAGE_NAME --name ci-cluster
 
       - name: Deploy app to cluster
         run: |
-          kubectl apply -f ./k8s/deployment.yaml -n $K8S_NAMESPACE
+          kubectl apply -f ./k8s/namespace.yaml
+          kubectl apply -f ./k8s/deployment.yaml
           kubectl rollout status deployment/my-app -n $K8S_NAMESPACE
 
       - name: Check pods status
